@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rejilla de animación</title>
+  <meta name="description" content="Crea animaciones de rejilla de barrera (scanimation) a partir de un video, un GIF o imágenes. Todo se procesa en tu navegador.">
+  <meta name="theme-color" content="#1f2937">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <img src="icons/icon.svg" alt="" width="36" height="36">
+      <div>
+        <h1>Rejilla de animación</h1>
+        <p>Scanimation · de un video, GIF o imágenes a un PDF listo para imprimir</p>
+      </div>
+    </div>
+    <details class="help">
+      <summary>¿Cómo se usa?</summary>
+      <ol>
+        <li>Elige un <b>video corto</b>, un GIF o varias imágenes (un ciclo de movimiento, idealmente 4–6 cuadros).</li>
+        <li>Selecciona los cuadros, rota o refleja si hace falta, y revisa la simulación.</li>
+        <li>Genera el PDF: <b>página 1</b> en papel, <b>página 2</b> en acetato. Imprime ambas al <b>100 % / tamaño real</b>.</li>
+        <li>Recorta el acetato a la medida, ponlo sobre la imagen y deslízalo (o gíralo en modo polar).</li>
+      </ol>
+      <p class="muted">Tus archivos no se suben a ningún lado: todo se procesa en este navegador.</p>
+    </details>
+  </header>
+
+  <main class="layout">
+    <!-- ================= panel de opciones ================= -->
+    <section class="controls" aria-label="Opciones">
+
+      <div class="card" id="card-src">
+        <h2><span class="n">1</span> Origen</h2>
+        <div class="btn-row">
+          <label class="btn">Video / GIF<input type="file" id="in-video" accept="video/*,.gif,.webp,.apng,.mp4,.mov,.webm,.m4v" hidden></label>
+          <label class="btn">Imágenes<input type="file" id="in-images" accept="image/*" multiple hidden></label>
+          <label class="btn">Carpeta<input type="file" id="in-folder" webkitdirectory multiple hidden></label>
+          <button class="btn" id="btn-demo" type="button">Demo</button>
+        </div>
+        <p class="hint" id="src-info">También puedes arrastrar archivos a la página.</p>
+      </div>
+
+      <div class="card">
+        <h2><span class="n">2</span> Selección y edición</h2>
+        <div class="grid3">
+          <label>Desde<input type="number" id="desde" min="1" value="1"></label>
+          <label>Hasta<input type="number" id="hasta" min="1" value="1"></label>
+          <label>1 de cada<input type="number" id="cada" min="1" value="1"></label>
+        </div>
+        <p class="hint" id="sel-info"></p>
+        <div class="btn-row edit-row">
+          <button class="btn icon" id="rot-l" type="button" title="Rotar 90° a la izquierda">⟲ 90°</button>
+          <button class="btn icon" id="rot-r" type="button" title="Rotar 90° a la derecha">⟳ 90°</button>
+          <span class="pill" id="rot-label">0°</span>
+          <button class="btn ghost" id="reset-edits" type="button">Restablecer</button>
+        </div>
+        <div class="checks">
+          <label><input type="checkbox" id="fh"> Reflejar ↔</label>
+          <label><input type="checkbox" id="fv"> Reflejar ↕</label>
+          <label><input type="checkbox" id="rev"> Orden inverso</label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="n">3</span> Imagen</h2>
+        <label class="row">Modo
+          <select id="mode">
+            <option value="bw">Blanco y negro (recomendado)</option>
+            <option value="gray">Escala de grises</option>
+            <option value="color">Color</option>
+          </select>
+        </label>
+        <label class="row" id="thr-row">Umbral
+          <input type="range" id="threshold" min="0" max="255" value="128">
+          <output id="thr-out">128</output>
+        </label>
+        <div class="checks"><label><input type="checkbox" id="invert"> Invertir colores</label></div>
+      </div>
+
+      <div class="card">
+        <h2><span class="n">4</span> Rejilla</h2>
+        <div class="seg" role="radiogroup">
+          <label><input type="radio" name="grid" value="vertical" checked><span>Barras ↔</span></label>
+          <label><input type="radio" name="grid" value="horizontal"><span>Barras ↕</span></label>
+          <label><input type="radio" name="grid" value="polar"><span>Disco ⟳</span></label>
+        </div>
+        <div class="grid3 mt">
+          <label>Franja (mm)<input type="number" id="slitMm" min="0.1" max="5" step="0.05" value="0.6"></label>
+          <label>Resolución
+            <select id="dpi"><option value="300">300 dpi</option><option value="600">600 dpi</option></select>
+          </label>
+          <button class="btn" id="suggest" type="button">Sugerir</button>
+        </div>
+        <p class="hint" id="slit-info"></p>
+        <div class="grid3" id="polar-box">
+          <label>Centro fijo (mm)<input type="number" id="hubMm" min="0" max="60" step="1" value="12"></label>
+          <label>Hueco eje (mm)<input type="number" id="holeMm" min="0" max="10" step="0.5" value="1.5"></label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="n">5</span> Hoja</h2>
+        <div class="seg" role="radiogroup">
+          <label><input type="radio" name="papel" value="carta" checked><span>Carta</span></label>
+          <label><input type="radio" name="papel" value="media"><span>Media carta</span></label>
+        </div>
+        <div class="seg mt" role="radiogroup" id="orient-group">
+          <label><input type="radio" name="orient" value="auto" checked><span id="orient-auto">Auto</span></label>
+          <label><input type="radio" name="orient" value="vertical"><span>Vertical</span></label>
+          <label><input type="radio" name="orient" value="horizontal"><span>Horizontal</span></label>
+        </div>
+      </div>
+
+      <div class="card sticky-gen">
+        <button class="btn primary big" id="btn-gen" type="button" disabled>Generar PDF</button>
+        <progress id="prog" hidden></progress>
+        <div class="btn-row" id="dl-row" hidden>
+          <a class="btn primary" id="dl" download="animacion_rejilla.pdf">Descargar PDF</a>
+          <a class="btn" id="open-pdf" target="_blank" rel="noopener">Abrir</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= vista previa ================= -->
+    <section class="preview" aria-label="Vista previa">
+      <div class="card">
+        <div class="view-bar">
+          <div class="seg small" role="radiogroup">
+            <label><input type="radio" name="view" value="sim" checked><span>Simulación</span></label>
+            <label><input type="radio" name="view" value="frames"><span>Cuadros</span></label>
+          </div>
+          <label class="speed">Velocidad <input type="range" id="speed" min="40" max="600" step="10" value="520"></label>
+        </div>
+        <div class="stage"><canvas id="view" width="460" height="460"></canvas>
+          <p class="stage-msg" id="stage-msg">Elige un origen o prueba el demo</p>
+        </div>
+        <div class="strip" id="strip"></div>
+      </div>
+    </section>
+
+    <section class="info" aria-label="Medidas y registro">
+      <div class="card">
+        <h3>Medidas</h3>
+        <ul class="measures" id="measures"><li class="muted">—</li></ul>
+        <ul class="warn" id="warns"></ul>
+      </div>
+      <div class="card">
+        <h3>Registro</h3>
+        <pre class="log" id="log"></pre>
+      </div>
+    </section>
+  </main>
+
+  <div class="drop" id="drop" hidden>Suelta aquí tu video, GIF o imágenes</div>
+
+  <footer class="foot">Procesamiento 100 % local en tu navegador · <a href="https://github.com/" id="repo-link" target="_blank" rel="noopener">código fuente</a></footer>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
